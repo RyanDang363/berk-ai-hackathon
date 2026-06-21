@@ -1,5 +1,5 @@
 schema_version: 1
-last_updated: 2026-06-20  # Integration merge: core agent arrows (Phases 1-R, OK) + redis-layer arrows (redis-store OK, agent-memory/patient-ehr PARTIAL) unioned. Dropped redis's `core-agents` placeholder — the core is now real (the 6 OK arrows below). agent-memory/patient-ehr stay PARTIAL: infra built, but Orchestrator/Admissions don't call memory/EHR yet.
+last_updated: 2026-06-20  # Integration merge (core + redis-layer + dashboard). Core agent arrows OK (Phases 1-R); redis-store OK, agent-memory/patient-ehr PARTIAL (infra built, Orchestrator/Admissions wiring pending); dashboard PARTIAL (UI on fixture, live Redis/event wiring pending). Dropped redis's `core-agents` and dashboard's `er-twin-core` placeholders — the core is real (the 6 OK arrows below).
 # Event-flow mechanics for the ER arrows are pinned in:
 #   docs/decisions/2026-06-20-event-flow-decisions.md        (Round 1: Gaps 1-9)
 #   docs/decisions/2026-06-20-round-2-event-mechanics.md     (Round 2: staff/oxygen/summary/replay)
@@ -7,7 +7,7 @@ last_updated: 2026-06-20  # Integration merge: core agent arrows (Phases 1-R, OK
 
 # Arrow dependency graph for the ER Twin. The whole system shares ONE HLD (README.md), ONE LLD
 # (docs/llds/er-twin-core.lld.md), and ONE spec file (docs/specs/er-events-specs.md) whose feature
-# sections (ORCH / DOMAIN / INTAKE / OXY / SUMM / REPLAY / MEM / EHR) are the natural arrow boundaries.
+# sections (ORCH / DOMAIN / INTAKE / OXY / SUMM / REPLAY / MEM / EHR / DASH) are the natural arrow boundaries.
 # There is no PRD, so no prd_* fields appear in upstream_at_audit.
 #
 # Arrow chain: README (HLD) -> er-twin-core.lld -> er-events-specs (EARS) -> tests -> code.
@@ -94,7 +94,7 @@ arrows:
     audited: 2026-06-20
     upstream_at_audit:
       hld_sha: 8513c74          # audited on the redis-layer branch (pre-integration); reconcile on next sweep
-    blocks: [agent-memory, patient-ehr]
+    blocks: [agent-memory, patient-ehr, dashboard]
     blockedby: []
     detail: redis-store.md
     next: null
@@ -124,8 +124,23 @@ arrows:
     next: "INTEGRATION (now unblocked — Orchestrator/Admissions exist): Orchestrator must extract MRN from chat (EHR-FLOW-001); AdmissionsAgent must call build_live_record() before persisting (EHR-FLOW-002). This is the MRN-dedupe/EHR-enriched variant of INTAKE-FLOW-001/002 + INTAKE-IDEM-001."
     drift: null
 
-# Domains registered in `arrows` above. All ER arrows are mapped + audited; the core six are OK, the
-# three redis-layer arrows are OK/PARTIAL (PARTIAL = infra built, Orchestrator/Admissions integration
-# pending). Phase P (Pika CLI scripts) carries no EARS specs, so it is not an arrow — it consumes
-# incident-replay's out/ artifacts. The dashboard branch (dev3) will add its own arrow(s) when merged.
+  # --- Dashboard arrow (dev3). Read-only UI on the fixture today; live Redis snapshot + er:events
+  #     subscription is the remaining PARTIAL work. ---
+
+  dashboard:                   # DASH-* — FastAPI + HTML read-only UI (Stretch)
+    status: PARTIAL
+    sampled: 2026-06-20
+    audited: 2026-06-20
+    upstream_at_audit:
+      hld_sha: 79e8a57          # audited on the dashboard branch (pre-integration); reconcile on next sweep
+    blocks: []
+    blockedby: [redis-store]
+    detail: dashboard.md
+    next: "implement DASH-SYS-002 and DASH-SYS-003 for live Redis snapshots and er:events subscription (read-only UI on the fixture is done; session login + optional Google OAuth in place)."
+    drift: null
+
+# Domains registered in `arrows` above. The core six are OK; the redis-layer (redis-store OK,
+# agent-memory/patient-ehr PARTIAL) and dashboard (PARTIAL) arrows track infra that is built but whose
+# integration into the merged Orchestrator/Admissions/live-store is pending. Phase P (Pika CLI scripts)
+# carries no EARS specs, so it is not an arrow — it consumes incident-replay's out/ artifacts.
 unmapped: []

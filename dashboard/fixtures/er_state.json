@@ -1,0 +1,33 @@
+{
+  "patients": [
+    {"id": "p1", "name": "Jordan Lee", "status": "admitted", "acuity": 2,
+     "chief_complaint": "chest pain", "vitals": {"hr": 102, "spo2": 94, "bp": "138/88", "temp_c": 37.1},
+     "assigned_bed": "bed1", "care_team": ["nurse1", "doc1"]},
+    {"id": "p2", "name": "Sam Rivera", "status": "in_triage", "acuity": 3,
+     "chief_complaint": "ankle injury", "vitals": {"hr": 84, "spo2": 98, "bp": "122/76", "temp_c": 36.8},
+     "assigned_bed": null, "care_team": []},
+    {"id": "p3", "name": "Alex Kim", "status": "waiting", "acuity": 4,
+     "chief_complaint": "fever", "vitals": {"hr": 90, "spo2": 97, "bp": "118/72", "temp_c": 38.4},
+     "assigned_bed": null, "care_team": []}
+  ],
+  "beds": [
+    {"id": "bed1", "status": "occupied", "occupied_by": "p1", "specialty": "cardiology", "equipment": ["o2_2"]},
+    {"id": "bed2", "status": "available", "occupied_by": null, "specialty": "general", "equipment": []},
+    {"id": "bed3", "status": "cleaning", "occupied_by": null, "specialty": "general", "equipment": []},
+    {"id": "bed4", "status": "available", "occupied_by": null, "specialty": "trauma", "equipment": ["defib_1"]}
+  ],
+  "nurses": [
+    {"id": "nurse1", "available": false, "location": "bed1", "assignments": ["p1"], "skills": ["triage", "cardiac"]},
+    {"id": "nurse2", "available": true, "location": "triage", "assignments": [], "skills": ["triage"]}
+  ],
+  "doctors": [
+    {"id": "doc1", "specialty": "cardiology", "available": false, "assignments": ["p1"]},
+    {"id": "doc2", "specialty": "general", "available": true, "assignments": []}
+  ],
+  "equipment": [
+    {"id": "o2_1", "type": "oxygen", "supply_level": 45, "in_use_by": null, "location": "storage"},
+    {"id": "o2_2", "type": "oxygen", "supply_level": 88, "in_use_by": "p1", "location": "bed1"},
+    {"id": "defib_1", "type": "defibrillator", "supply_level": null, "in_use_by": null, "location": "bed4"},
+    {"id": "iv_1", "type": "iv_pump", "supply_level": null, "in_use_by": "p1", "location": "bed1"}
+  ]
+}

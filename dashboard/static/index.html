@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ER Twin — Live Floor</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>AgentER — Live Floor</h1>
+    <div class="meta">
+      <span id="banner" class="banner hidden">data source unavailable — showing last known state</span>
+      <span id="live-dot" class="live-dot" title="live"></span>
+      <span id="updated" class="updated">—</span>
+      <a class="logout" href="/logout">Sign out</a>
+    </div>
+  </header>
+
+  <!-- KPI strip -->
+  <section id="kpis" class="kpis"></section>
+
+  <main>
+    <section class="panel wide floor-panel">
+      <div class="panel-topline">
+        <h2>ER Floor</h2>
+        <p class="panel-note">Read-only operational prototype. Click any marker for live details.</p>
+      </div>
+      <div id="floor-map" class="floor-map"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Beds</h2>
+      <div id="beds" class="bed-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Patients</h2>
+      <div id="patients" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Staff</h2>
+      <div id="staff" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Equipment</h2>
+      <div id="equipment" class="cards"></div>
+    </section>
+
+    <section class="panel wide">
+      <h2>Event Log</h2>
+      <ul id="events" class="events"></ul>
+    </section>
+
+  </main>
+
+  <!-- Command bar slot (hidden in read-only baseline; revealed when input is enabled) -->
+  <footer id="command-bar" class="hidden">
+    <input id="command-input" type="text" placeholder="Type a command for the orchestrator…" />
+    <button id="command-send">Send</button>
+  </footer>
+
+  <div id="detail-shell" class="detail-shell hidden" aria-hidden="true">
+    <button id="detail-backdrop" class="detail-backdrop" type="button" aria-label="Close details"></button>
+    <aside id="detail-panel" class="panel detail-panel">
+      <div class="detail-head">
+        <div>
+          <p id="detail-kicker" class="detail-kicker">Selection</p>
+          <h2 id="detail-title" class="detail-title">Live detail</h2>
+        </div>
+        <button id="detail-close" class="detail-close" type="button" aria-label="Close details">×</button>
+      </div>
+      <p id="detail-sub" class="detail-sub">Choose a patient or staff member to inspect live state.</p>
+      <div id="detail-body" class="detail-body"></div>
+    </aside>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
