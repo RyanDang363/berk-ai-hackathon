@@ -52,6 +52,7 @@ const {
   isLowO2,
   FLOOR_ZONES,
   FLOOR_VIEWBOX,
+  PATIENT_ROOM_IDS,
   BED_LAYOUT,
   FLOOR_WALLS,
   normalizeFloorZone,
@@ -355,13 +356,13 @@ function renderKpis(s) {
 
 // 3D-only render config. The shared geometry (FLOOR_ZONES, FLOOR_VIEWBOX, BED_LAYOUT, FLOOR_LABELS,
 // FLOOR_WALLS) is destructured from window.Floor near the top of this file.
-const FLOOR_PERIMETER_WALLS = FLOOR_WALLS.slice(0, 11);
+const FLOOR_PERIMETER_WALLS = FLOOR_WALLS.slice(0, 4);
 const FLOOR_FOCUS_GROUPS = [
   { label: "All", zone: "" },
   { label: "Waiting", zone: "waiting" },
   { label: "Triage", zone: "triage" },
   { label: "Trauma", zone: "trauma" },
-  { label: "Bays", zone: "general-a" },
+  { label: "Rooms", zone: "patient-rooms" },
   { label: "Nurse", zone: "nurses-station" },
   { label: "Supply", zone: "storage" },
 ];
@@ -562,11 +563,10 @@ function clearGroup3d(group) {
 }
 
 function zoneBounds(zoneId) {
-  const bayIds = ["cardiology", "general-a", "general-b"];
   const zones = !zoneId
     ? FLOOR_ZONES
-    : zoneId === "general-a"
-      ? FLOOR_ZONES.filter((zone) => bayIds.includes(zone.id))
+    : zoneId === "patient-rooms"
+      ? FLOOR_ZONES.filter((zone) => PATIENT_ROOM_IDS.includes(zone.id))
       : FLOOR_ZONES.filter((zone) => zone.id === zoneId);
 
   const selectedZones = zones.length ? zones : FLOOR_ZONES;
@@ -586,13 +586,25 @@ function zoneBounds(zoneId) {
 
 function focusMatches(buttonZone, activeZone) {
   if (!buttonZone) return !activeZone;
-  if (buttonZone === "general-a") return ["cardiology", "general-a", "general-b"].includes(activeZone);
+  if (buttonZone === "patient-rooms") return PATIENT_ROOM_IDS.includes(activeZone);
   return buttonZone === activeZone;
 }
 
 function updateFocusButtons3d(shell, activeZone) {
   shell.querySelectorAll("[data-view-zone]").forEach((button) => {
     button.classList.toggle("active", focusMatches(button.dataset.viewZone || "", activeZone));
+  });
+}
+
+function setFloorCameraLocked3d(view, locked) {
+  if (!view) return;
+  view.cameraLocked = !!locked;
+  view.shell.classList.toggle("floor-camera-locked", view.cameraLocked);
+  view.shell.querySelectorAll('[data-view-action="lock"]').forEach((button) => {
+    button.classList.toggle("active", view.cameraLocked);
+    button.setAttribute("aria-pressed", view.cameraLocked ? "true" : "false");
+    button.textContent = view.cameraLocked ? "Unlock map" : "Lock map";
+    button.title = view.cameraLocked ? "Unlock map movement" : "Lock map movement";
   });
 }
 
@@ -603,7 +615,11 @@ function wireFloorControls3d(shell) {
       event.stopPropagation();
       if (!floorView) return;
       const action = button.dataset.viewAction;
-      if (action === "reveal") {
+      if (action === "lock") {
+        setFloorCameraLocked3d(floorView, !floorView.cameraLocked);
+      } else if (floorView.cameraLocked) {
+        return;
+      } else if (action === "reveal") {
         startFloorIntro3d(floorView);
       } else if (action === "zoom-in") {
         completeFloorIntro3d(floorView);
@@ -640,6 +656,9 @@ function ensureFloor3dShell(map) {
         <div class="floor-room-label-layer" aria-hidden="true"></div>
         <div class="floor-token-layer"></div>
         <div class="floor-hud" aria-hidden="true"></div>
+        <div class="floor-lock-control">
+          <button type="button" data-view-action="lock" title="Lock map movement" aria-pressed="false">Lock map</button>
+        </div>
         <div class="floor-view-controls" aria-label="3D map controls">
           <button type="button" data-view-action="zoom-in" title="Zoom in">+</button>
           <button type="button" data-view-action="zoom-out" title="Zoom out">-</button>
@@ -712,6 +731,7 @@ function initFloor3d(shell) {
     roomAnchors: new Map(),
     pickables: [],
     focusZone: "",
+    cameraLocked: false,
     raycaster: new THREE.Raycaster(),
     pointer: new THREE.Vector2(),
     intro: {
@@ -738,6 +758,11 @@ function bindFloor3dControls(view) {
   const { shell, container } = view;
   let drag = null;
   const runAction = (action) => {
+    if (action === "lock") {
+      setFloorCameraLocked3d(view, !view.cameraLocked);
+      return;
+    }
+    if (view.cameraLocked) return;
     completeFloorIntro3d(view);
     if (action === "zoom-in") {
       view.controls.distance = clamp(view.controls.distance * 0.82, FLOOR_3D.minDistance, FLOOR_3D.maxDistance);
@@ -751,24 +776,9 @@ function bindFloor3dControls(view) {
     }
   };
 
-  shell.querySelectorAll("[data-view-action]").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      runAction(button.dataset.viewAction);
-    });
-  });
-
-  shell.querySelectorAll("[data-view-zone]").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      focusFloorZone3d(button.dataset.viewZone || "");
-    });
-  });
-
   container.addEventListener("contextmenu", (event) => event.preventDefault());
   container.addEventListener("pointerdown", (event) => {
+    if (view.cameraLocked) return;
     if (event.button !== 0 && event.button !== 2) return;
     container.setPointerCapture(event.pointerId);
     if (!view.intro.armed) completeFloorIntro3d(view);
@@ -816,6 +826,7 @@ function bindFloor3dControls(view) {
 
   container.addEventListener("wheel", (event) => {
     event.preventDefault();
+    if (view.cameraLocked) return;
     if (!view.intro.armed) completeFloorIntro3d(view);
     zoomFloor3d(view, event.deltaY > 0 ? 1.1 : 0.9, event.clientX, event.clientY);
   }, { passive: false });
@@ -831,6 +842,7 @@ function bindFloor3dControls(view) {
     const zoneButton = event.target.closest("[data-view-zone]");
     if (zoneButton) {
       event.preventDefault();
+      if (view.cameraLocked) return;
       focusFloorZone3d(zoneButton.dataset.viewZone || "");
     }
   });
@@ -849,6 +861,7 @@ function resetFloorCamera3d(view = floorView) {
 
 function focusFloorZone3d(zoneId) {
   if (!floorView) return;
+  if (floorView.cameraLocked) return;
   const bounds = zoneBounds(zoneId);
   const center = floorWorld(bounds.cx, bounds.cy, 0);
   const span = Math.max(bounds.w, bounds.h) * FLOOR_3D.scale;
@@ -968,23 +981,11 @@ function exteriorRoofPerimeterPoints() {
   const right = Math.max(...xs);
   const top = Math.min(...ys);
   const bottom = Math.max(...ys);
-  const topEdge = allPoints.filter((point) => point.y === top);
-  const leftEdge = allPoints.filter((point) => point.x === left);
-  const rightTurn = Math.max(
-    ...FLOOR_PERIMETER_WALLS
-      .filter(([x1, y1, x2, y2]) => x1 === x2 && x1 === Math.max(...topEdge.map((point) => point.x)))
-      .flatMap(([x1, y1, x2, y2]) => [y1, y2])
-  );
-  const leftTurn = Math.min(...leftEdge.map((point) => point.y));
   return [
-    { x: Math.min(...topEdge.map((point) => point.x)), y: top },
-    { x: Math.max(...topEdge.map((point) => point.x)), y: top },
-    { x: Math.max(...topEdge.map((point) => point.x)), y: rightTurn },
-    { x: right, y: rightTurn },
+    { x: left, y: top },
+    { x: right, y: top },
     { x: right, y: bottom },
     { x: left, y: bottom },
-    { x: left, y: leftTurn },
-    { x: Math.min(...topEdge.map((point) => point.x)), y: leftTurn },
   ];
 }
 
@@ -1355,21 +1356,6 @@ function addBed3d(view, bed) {
   base.position.y = 0.045;
   base.castShadow = true;
   group.add(base);
-
-  const mattress = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7, 0.035, 0.94),
-    new THREE.MeshStandardMaterial({ color: 0xf8f5ee, roughness: 0.96, metalness: 0 })
-  );
-  mattress.position.y = 0.105;
-  mattress.castShadow = true;
-  group.add(mattress);
-
-  const pillow = new THREE.Mesh(
-    new THREE.BoxGeometry(0.58, 0.026, 0.22),
-    new THREE.MeshStandardMaterial({ color: 0xdfe8e4, roughness: 0.96, metalness: 0 })
-  );
-  pillow.position.set(0, 0.145, -0.34);
-  group.add(pillow);
   view.modelGroup.add(group);
 }
 
@@ -1399,15 +1385,17 @@ function addMarker3d(view, marker) {
   disk.castShadow = true;
   group.add(disk);
 
-  const outline = new THREE.Mesh(
-    new THREE.TorusGeometry(radius + 0.035, 0.012, 6, 36),
-    new THREE.MeshBasicMaterial({ color: active ? 0x667a74 : 0xf7f6f2, transparent: true, opacity: active ? 0.9 : 0.52 })
-  );
-  outline.rotation.x = Math.PI / 2;
-  outline.position.y = 0.115;
-  group.add(outline);
+  if (marker.kind !== "bed") {
+    const outline = new THREE.Mesh(
+      new THREE.TorusGeometry(radius + 0.035, 0.012, 6, 36),
+      new THREE.MeshBasicMaterial({ color: active ? 0x667a74 : 0xf7f6f2, transparent: true, opacity: active ? 0.9 : 0.52 })
+    );
+    outline.rotation.x = Math.PI / 2;
+    outline.position.y = 0.115;
+    group.add(outline);
+  }
 
-  if (active) {
+  if (active && marker.kind !== "bed") {
     const ring = new THREE.Mesh(
       new THREE.TorusGeometry(0.34, 0.016, 8, 48),
       new THREE.MeshBasicMaterial({ color: 0x667a74, transparent: true, opacity: 0.62 })
@@ -1430,9 +1418,14 @@ function updateFloor3dScene(shell, state, markers, activeZone) {
   addGround3d(floorView);
 
   const highlightedZone = activeZone || floorView.focusZone || "";
-  FLOOR_ZONES.forEach((zone) => addRoom3d(floorView, zone, !!highlightedZone && focusMatches(highlightedZone, zone.id)));
+  const roomDrawOrder = [
+    ...FLOOR_ZONES.filter((zone) => zone.id === "corridor"),
+    ...FLOOR_ZONES.filter((zone) => zone.id !== "corridor"),
+  ];
+  roomDrawOrder.forEach((zone) => addRoom3d(floorView, zone, !!highlightedZone && focusMatches(highlightedZone, zone.id)));
   FLOOR_WALLS.forEach((wall) => addWall3d(floorView, wall));
-  (state.beds || []).forEach((bed) => addBed3d(floorView, bed));
+  const bedsById = new Map((state.beds || []).map((bed) => [bed.id, bed]));
+  Object.keys(BED_LAYOUT).forEach((bedId) => addBed3d(floorView, bedsById.get(bedId) || { id: bedId, status: "available" }));
   markers.forEach((marker) => addMarker3d(floorView, marker));
 
   const labelLayer = shell.querySelector(".floor-room-label-layer");
