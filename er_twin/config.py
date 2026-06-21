@@ -12,5 +12,13 @@ class Settings(BaseSettings):
     agent_seed: str = "er-twin-demo-seed"
     use_mock: bool = True
 
+    # Iris Agent Memory (Phase 7) — leave blank to use NoopMemory
+    agent_memory_base_url: str = ""
+    agent_memory_store_id: str = ""
+    agent_memory_api_key: str = ""
+
+    # EHR master fixture path — override in tests via EHR_MASTER_PATH env var
+    ehr_master_path: str = "fixtures/ehr_master.json"
+
 
 settings = Settings()

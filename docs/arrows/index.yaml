@@ -1,0 +1,55 @@
+schema_version: 1
+last_updated: 2026-06-20
+
+# Four arrows cover the ER Twin. Each maps one subsystem tier.
+# HLD = README.md | LLD = docs/llds/er-twin-core.lld.md | EARS = docs/specs/er-events-specs.md
+# Spec markers: [x] implemented · [ ] active gap · [D] deferred
+
+arrows:
+  redis-store:
+    status: OK
+    sampled: 2026-06-20
+    audited: 2026-06-20
+    upstream_at_audit:
+      hld_sha: 8513c74          # README.md — last committed SHA
+    blocks: [agent-memory, patient-ehr, core-agents]
+    blockedby: []
+    detail: redis-store.md
+    next: null
+    drift: null
+
+  agent-memory:
+    status: PARTIAL
+    sampled: 2026-06-20
+    audited: 2026-06-20
+    upstream_at_audit:
+      hld_sha: 8513c74
+    blocks: [core-agents]
+    blockedby: [redis-store]
+    detail: agent-memory.md
+    next: "Dev 1 — Orchestrator must call memory.record_event() after each ER event (MEM-FLOW-001) and memory.recall() before summary LLM call (MEM-FLOW-002)"
+    drift: null
+
+  patient-ehr:
+    status: PARTIAL
+    sampled: 2026-06-20
+    audited: 2026-06-20
+    upstream_at_audit:
+      hld_sha: 8513c74
+    blocks: [core-agents]
+    blockedby: [redis-store]
+    detail: patient-ehr.md
+    next: "Dev 1 — Orchestrator must extract MRN from chat (EHR-FLOW-001); AdmissionsAgent must call build_live_record() before persisting (EHR-FLOW-002)"
+    drift: null
+
+  core-agents:
+    status: UNMAPPED
+    sampled: null
+    audited: null
+    upstream_at_audit:
+      hld_sha: null
+    blocks: []
+    blockedby: [redis-store, agent-memory, patient-ehr]
+    detail: core-agents.md
+    next: "Dev 1 — implement Bureau + all agents per er-twin-core.lld.md §3–§5; start with ORCH-SKEL-001 (stub ping loop)"
+    drift: null
