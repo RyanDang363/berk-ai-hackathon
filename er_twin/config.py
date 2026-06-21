@@ -12,5 +12,10 @@ class Settings(BaseSettings):
     agent_seed: str = "er-twin-demo-seed"
     use_mock: bool = True
 
+    # Dashboard (Dev 3) — read-only baseline
+    dashboard_source: str = "fixture"  # "fixture" | "redis"
+    dashboard_allow_input: bool = False
+    dashboard_port: int = 8050
+
 
 settings = Settings()

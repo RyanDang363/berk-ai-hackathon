@@ -8,12 +8,15 @@ dependencies = [
     "uagents-core",
     "pydantic-settings",
     "redis",
+    "fastapi",
+    "uvicorn",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.0",
     "ruff>=0.4",
+    "httpx",
 ]
 
 [tool.uv]
