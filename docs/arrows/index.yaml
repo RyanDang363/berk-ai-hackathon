@@ -1,0 +1,27 @@
+schema_version: 1
+last_updated: 2026-06-20
+
+arrows:
+  er-twin-core:
+    status: MAPPED
+    sampled: 2026-06-20
+    audited: null
+    blocks:
+      - dashboard
+    blockedby: []
+    detail: er-twin-core.md
+    next: audit er-events specs against current er_twin implementation and identify first missing core slice
+    drift: null
+
+  dashboard:
+    status: PARTIAL
+    sampled: 2026-06-20
+    audited: 2026-06-20
+    upstream_at_audit:
+      hld_sha: 79e8a57
+    blocks: []
+    blockedby:
+      - er-twin-core
+    detail: dashboard.md
+    next: implement DASH-SYS-002 and DASH-SYS-003 for live Redis snapshots and event subscription
+    drift: null

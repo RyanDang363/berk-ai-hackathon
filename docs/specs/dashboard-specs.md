@@ -51,6 +51,10 @@ Spec ID format: `{FEATURE}-{TYPE}-{NNN}`. Feature: `DASH`. Types: `API`, `SYS`, 
 - [x] **DASH-AUTH-004** — If an unauthenticated client requests a protected API endpoint, then the dashboard shall respond `401`.
 - [x] **DASH-AUTH-005** — When an authenticated client requests logout, the dashboard shall clear the session.
 - [x] **DASH-AUTH-006** — The dashboard shall serve the login page and static assets without authentication. *(ubiquitous — login must be reachable)*
+- [x] **DASH-AUTH-007** — When Google OAuth credentials are configured, the dashboard shall expose a Google sign-in path; when they are not configured, the dashboard shall degrade cleanly to the local sign-in flow.
+- [x] **DASH-AUTH-008** — When Google OAuth returns an authenticated account with an email address, the dashboard shall establish a session for that email without applying an allowlist. *(demo-only choice requested by user)*
+- [x] **DASH-AUTH-009** — The Google OAuth client configuration shall authorize both `http://localhost:8050/auth/callback` and `http://127.0.0.1:8050/auth/callback` so the sign-in flow succeeds regardless of which loopback host the browser uses during local demoing.
+- [x] **DASH-AUTH-010** — For consumer Gmail testing, the Google OAuth consent screen shall be configured for `External` users and the tester account shall be added as a test user unless the app is published. *(operational prerequisite; outside app code)*
 
 ## DASH — Input (deferred — read-only baseline)
 

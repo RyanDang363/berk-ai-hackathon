@@ -12,6 +12,7 @@ dependencies = [
     "uvicorn",
     "python-multipart",
     "itsdangerous",
+    "authlib",
 ]
 
 [dependency-groups]

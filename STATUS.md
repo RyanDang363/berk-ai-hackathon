@@ -16,7 +16,7 @@ Live progress tracker. Update as phases complete. See
 | 4 | Event 2 — Low oxygen alert | agents dev | not started |
 | 5 | Event 3 — Status summary | agents dev | not started |
 | 6 | Redis swap (`RedisStore`), demo scripting | redis dev | not started |
-| Stretch | Dashboard (FastAPI + HTML) | dashboard dev | not started |
+| Stretch | Dashboard (FastAPI + HTML) | dashboard dev | in progress — fixture/sim UI, auth gate, optional Google OAuth |
 | Stretch | Pika incident replay | agents dev | not started |
 
 ## Demo readiness checklist

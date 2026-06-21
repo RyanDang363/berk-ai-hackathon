@@ -2,16 +2,19 @@
 
 @spec DASH-API-001, DASH-API-002, DASH-API-003, DASH-API-004, DASH-ERR-001, DASH-IN-002
 @spec DASH-AUTH-001, DASH-AUTH-002, DASH-AUTH-003, DASH-AUTH-004, DASH-AUTH-005, DASH-AUTH-006
+@spec DASH-AUTH-007, DASH-AUTH-008
 
 Run: uvicorn dashboard.server:app --port 8050
 
-Auth note: a session-cookie login gated on hardcoded credentials. This is a demo access gate,
-NOT real HIPAA compliance (the project uses synthetic data; production compliance is out of scope).
+Auth note: session-cookie login via Google OAuth (any account — no allowlist) or a hardcoded
+username/password fallback. A demo access gate, NOT real HIPAA compliance (the project uses
+synthetic data; production compliance is out of scope).
 """
 
 from datetime import datetime
 from pathlib import Path
 
+from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +29,18 @@ _STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="ER Twin — Admin Dashboard")
 app.add_middleware(SessionMiddleware, secret_key=settings.dashboard_secret_key)
 app.mount("/static", StaticFiles(directory=_STATIC), name="static")
+
+# Google OAuth is registered only when credentials are configured (graceful degradation).
+oauth = OAuth()
+GOOGLE_ENABLED = bool(settings.google_client_id and settings.google_client_secret)
+if GOOGLE_ENABLED:
+    oauth.register(
+        name="google",
+        client_id=settings.google_client_id,
+        client_secret=settings.google_client_secret,
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+        client_kwargs={"scope": "openid email profile"},
+    )
 
 _last_good: dict | None = None
 
@@ -60,6 +75,38 @@ async def login(request: Request) -> RedirectResponse:
         request.session["user"] = username
         return RedirectResponse("/", status_code=303)
     return RedirectResponse("/login?error=1", status_code=303)
+
+
+@app.get("/auth/config")
+def auth_config() -> JSONResponse:
+    """Lets the login page show the Google button only when configured. @spec DASH-AUTH-007"""
+    return JSONResponse({"google_enabled": GOOGLE_ENABLED})
+
+
+@app.get("/auth/google")
+async def auth_google(request: Request):
+    """Begin the Google OAuth flow. @spec DASH-AUTH-007"""
+    if not GOOGLE_ENABLED:
+        return RedirectResponse("/login?error=oauth_unconfigured", status_code=303)
+    redirect_uri = request.url_for("auth_callback")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/auth/callback")
+async def auth_callback(request: Request):
+    """Complete OAuth: any authenticated Google account is allowed in. @spec DASH-AUTH-007, DASH-AUTH-008"""
+    if not GOOGLE_ENABLED:
+        return RedirectResponse("/login?error=oauth_unconfigured", status_code=303)
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError:
+        return RedirectResponse("/login?error=1", status_code=303)
+    userinfo = token.get("userinfo") or {}
+    email = userinfo.get("email")
+    if not email:
+        return RedirectResponse("/login?error=1", status_code=303)
+    request.session["user"] = email  # no allowlist — any Google account is accepted
+    return RedirectResponse("/", status_code=303)
 
 
 @app.get("/logout")

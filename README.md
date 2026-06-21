@@ -125,7 +125,7 @@ flowchart TD
 | **State / memory** | Redis — one hash per agent ID (vitals, status, location, assignments); Pub/Sub for dashboard feed |
 | **Secrets** | `.env` + `.env.example` — keys: `ASIONE_API_KEY`, `REDIS_URL`, `FAL_KEY`. Never commit `.env`. |
 | **Stretch — video** | Pika 2.2 image-to-video via fal.ai. Async (~minutes). Pre-generate one incident clip before judging. |
-| **Stretch — dashboard** | FastAPI + static HTML reading Redis. 3D via Three.js only if time remains. |
+| **Stretch — dashboard** | FastAPI + static HTML reading Redis/fixture/sim, with session login and optional Google OAuth for demo access. 3D via Three.js only if time remains. |
 
 ---
 

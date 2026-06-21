@@ -173,19 +173,30 @@ compliance is explicitly out of scope (README § Out of Scope). It demonstrates 
 story without claiming to satisfy it.
 
 - **Mechanism:** signed **session cookie** via Starlette `SessionMiddleware` (secret from
-  `settings.dashboard_secret_key`). Credentials checked against `settings.dashboard_username` /
-  `settings.dashboard_password` (default `admin` / `password`; override in `.env`).
-- **Routes:** `GET /login` (public page), `POST /login` (validate → set session → 303 to `/`;
-  on failure → 303 to `/login?error=1`), `GET /logout` (clear session → 303 to `/login`).
+  `settings.dashboard_secret_key`). Two auth paths are supported:
+  1. local fallback credentials from `settings.dashboard_username` /
+     `settings.dashboard_password` (default `admin` / `password`; override in `.env`)
+  2. optional Google OAuth (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`); when configured, any
+     authenticated Google account email is accepted
+- **Routes:** `GET /login` (public page), `POST /login` (local fallback), `GET /auth/config`
+  (frontend toggle for Google button), `GET /auth/google` (begin OAuth), `GET /auth/callback`
+  (complete OAuth → set session from Google email), `GET /logout` (clear session → `/login`).
+- **Google Cloud prerequisites:** the OAuth client is a **Web application** and must authorize
+  both `http://localhost:8050/auth/callback` and `http://127.0.0.1:8050/auth/callback`, because
+  Google matches the redirect URI exactly and local demo flows may begin from either loopback host.
+  For personal Gmail testing, the consent screen must use **External** audience and the tester must
+  be added as a **test user** unless the app is published.
 - **Protection:** `/` redirects unauthenticated users to `/login`; `/api/*` return **401** when
   unauthenticated (via the `require_api` dependency). `/static/*` and `/login` stay public so the
   login page can render.
-- **Known limitations (demo gate):** single hardcoded account, no hashing/lockout/expiry/CSRF,
-  plaintext default password. Fine for judging; replace with a real IdP for anything beyond.
+- **Known limitations (demo gate):** no allowlist, no role model, no CSRF hardening, local fallback
+  password is plaintext, and Google OAuth is acceptable only because the data is synthetic. Fine
+  for judging; replace with a real IdP and policy controls for anything beyond.
 
 | Decision | Chosen | Alternative | Why |
 |---|---|---|---|
-| Auth model | Session cookie + hardcoded creds | OAuth/IdP, JWT | Smallest thing that gates access for a 24h demo; no external dependency |
+| Auth model | Session cookie + optional Google OAuth + local fallback | OAuth/IdP only, JWT | Still demo-simple, but matches the requested "sign in with Google; let any email in" flow |
+| Local redirect URIs | Register both `localhost` and `127.0.0.1` | Register only one loopback host | Google requires exact redirect matches; this avoids brittle local-demo failures |
 
 ## 10. Demo simulation & live feedback (UX)
 

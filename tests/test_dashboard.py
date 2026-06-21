@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from dashboard import datasource
 from dashboard.datasource import build_fixture_store, derive_summary, snapshot
+from dashboard import server
 from dashboard.server import app
 
 CREDS = {"username": "admin", "password": "password"}
@@ -62,6 +63,62 @@ def test_logout_clears_session(auth_client):
 # @spec DASH-AUTH-006 — login page is reachable without auth
 def test_login_page_public():
     assert new_client().get("/login").status_code == 200
+
+
+# @spec DASH-AUTH-007 — auth config reports whether Google sign-in is available
+def test_auth_config_reports_google_disabled_by_default(monkeypatch):
+    monkeypatch.setattr(server, "GOOGLE_ENABLED", False)
+    assert new_client().get("/auth/config").json() == {"google_enabled": False}
+
+
+# @spec DASH-AUTH-007 — Google flow route degrades cleanly when not configured
+def test_google_sign_in_redirects_to_error_when_unconfigured(monkeypatch):
+    monkeypatch.setattr(server, "GOOGLE_ENABLED", False)
+    r = new_client().get("/auth/google", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/login?error=oauth_unconfigured"
+
+
+# @spec DASH-AUTH-008 — a successful Google callback accepts any authenticated email account
+def test_google_callback_accepts_any_email(monkeypatch):
+    class GoogleClient:
+        async def authorize_access_token(self, request):
+            return {"userinfo": {"email": "anyone@example.com"}}
+
+    monkeypatch.setattr(server, "GOOGLE_ENABLED", True)
+    monkeypatch.setattr(
+        server.oauth,
+        "google",
+        GoogleClient(),
+        raising=False,
+    )
+
+    c = new_client()
+    r = c.get("/auth/callback", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/"
+    assert c.get("/api/state").status_code == 200
+
+
+# @spec DASH-AUTH-008 — a Google callback without an email does not establish a session
+def test_google_callback_requires_email(monkeypatch):
+    class GoogleClient:
+        async def authorize_access_token(self, request):
+            return {"userinfo": {}}
+
+    monkeypatch.setattr(server, "GOOGLE_ENABLED", True)
+    monkeypatch.setattr(
+        server.oauth,
+        "google",
+        GoogleClient(),
+        raising=False,
+    )
+
+    c = new_client()
+    r = c.get("/auth/callback", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/login?error=1"
+    assert c.get("/api/state").status_code == 401
 
 
 # --- State / API (authenticated) ----------------------------------------------
