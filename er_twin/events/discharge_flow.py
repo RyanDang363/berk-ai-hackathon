@@ -132,13 +132,26 @@ def commit_discharge(
 
 
 def release_patient_resources(store: StorageInterface, patient_id: str) -> None:
-    """Free bed, nurse, and doctor tied to a discharged patient."""
+    """Free bed, nurse, and doctor tied to a discharged patient.
+
+    Staff are released by the union of the patient's ``care_team`` AND any nurse/doctor whose own
+    ``assignments`` still reference this patient. Relying on ``care_team`` alone leaks staff whenever
+    the two drift apart (e.g. a hand-seeded baseline that lists a doctor but not the assigned nurse).
+    """
     rec = store.get(patient.patient_key(patient_id))
+
+    nurses = {m for m in rec.get("care_team", []) if m.startswith("nurse")}
+    nurses |= {nid for nid in nurse.NURSES if patient_id in store.get(nurse.nurse_key(nid)).get("assignments", [])}
+    doctors = {m for m in rec.get("care_team", []) if m.startswith("doc")}
+    doctors |= {did for did in doctor.DOCTORS if patient_id in store.get(doctor.doctor_key(did)).get("assignments", [])}
+
+    # Release staff BEFORE the bed: release_nurse reads the patient's assigned_bed to clean an
+    # oxygen-dispatch task, which release_bed would otherwise have already nulled.
+    for nid in nurses:
+        nurse.release_nurse(store, nid, patient_id)
+    for did in doctors:
+        doctor.release_doctor(store, did, patient_id)
+
     bed_id = rec.get("assigned_bed")
     if bed_id:
         bed.release_bed(store, bed_id)
-    for member in rec.get("care_team", []):
-        if member.startswith("nurse"):
-            nurse.release_nurse(store, member, patient_id)
-        elif member.startswith("doc"):
-            doctor.release_doctor(store, member, patient_id)

@@ -88,7 +88,7 @@ def seed_baseline(store: StorageInterface) -> None:
         "acuity": 3, "specialty": "general", "status": "in_treatment",
         "vitals": {"heart_rate": 104, "blood_pressure": "136/84", "resp_rate": 24,
                    "spo2": 92, "temperature_f": 99.1, "pain_score": 4},
-        "assigned_bed": "bed3", "care_team": ["doc2"],
+        "assigned_bed": "bed3", "care_team": ["nurse1", "doc2"],
     })
     store.update("er:bed:bed3", {"occupied_by": "p2", "status": "occupied", "equipment": ["o2_1"]})
     store.update("er:equipment:o2_1", {"supply_level": 55, "in_use_by": "p2", "location": "bed-3"})
