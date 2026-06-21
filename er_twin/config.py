@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     dashboard_source: str = "fixture"  # "fixture" | "redis"
     dashboard_allow_input: bool = False
     dashboard_port: int = 8050
+    # Dashboard auth (demo gate — NOT real HIPAA compliance). Override in .env for anything real.
+    dashboard_username: str = "admin"
+    dashboard_password: str = "password"
+    dashboard_secret_key: str = "dev-insecure-secret-change-me"  # signs the session cookie
 
 
 settings = Settings()

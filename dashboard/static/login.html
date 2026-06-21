@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AgentER — Sign in</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="login-body">
+  <form class="login-card" method="post" action="/login">
+    <h1>AgentER</h1>
+    <p class="login-sub">Restricted — authorized ER staff only</p>
+    <p id="error" class="login-error hidden">Invalid username or password.</p>
+    <label>Username<input name="username" autocomplete="username" autofocus /></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" /></label>
+    <button type="submit">Sign in</button>
+  </form>
+  <script>
+    if (new URLSearchParams(location.search).has("error")) {
+      document.getElementById("error").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>

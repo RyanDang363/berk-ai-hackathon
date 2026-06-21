@@ -35,6 +35,15 @@ Spec ID format: `{FEATURE}-{TYPE}-{NNN}`. Feature: `DASH`. Types: `API`, `SYS`, 
 - [x] **DASH-ERR-002** — If the Redis source is unavailable, then the frontend shall display a non-blocking "data source unavailable" banner and continue polling.
 - [x] **DASH-ERR-003** — If an entity record is missing an optional field, then the dashboard shall render a default placeholder for it without raising an error.
 
+## DASH — Authentication (demo access gate — not real HIPAA compliance)
+
+- [x] **DASH-AUTH-001** — When valid credentials are submitted to `POST /login`, the dashboard shall establish an authenticated session and redirect to the dashboard.
+- [x] **DASH-AUTH-002** — If invalid credentials are submitted to `POST /login`, then the dashboard shall not establish a session and shall redirect back to the login page with an error indication.
+- [x] **DASH-AUTH-003** — If an unauthenticated client requests a protected page, then the dashboard shall redirect it to the login page.
+- [x] **DASH-AUTH-004** — If an unauthenticated client requests a protected API endpoint, then the dashboard shall respond `401`.
+- [x] **DASH-AUTH-005** — When an authenticated client requests logout, the dashboard shall clear the session.
+- [x] **DASH-AUTH-006** — The dashboard shall serve the login page and static assets without authentication. *(ubiquitous — login must be reachable)*
+
 ## DASH — Input (deferred — read-only baseline)
 
 - [D] **DASH-IN-001** — Where `dashboard_allow_input` is enabled, when `POST /api/command` is received, the dashboard shall forward the phrase to the OrchestratorAgent via `send_command`.

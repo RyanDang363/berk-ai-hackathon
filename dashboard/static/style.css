@@ -92,4 +92,20 @@ footer {
 footer input { flex: 1; padding: 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--text); }
 footer button { padding: 8px 18px; background: var(--accent); border: none; border-radius: 8px; color: #04101f; font-weight: 600; cursor: pointer; }
 
+.logout { color: var(--muted); font-size: 12px; text-decoration: none; border: 1px solid var(--line); padding: 4px 10px; border-radius: 6px; }
+.logout:hover { color: var(--text); border-color: var(--muted); }
+
+/* Login page */
+.login-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-card {
+  display: flex; flex-direction: column; gap: 12px; width: 300px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 28px;
+}
+.login-card h1 { margin: 0; font-size: 22px; }
+.login-sub { margin: 0 0 6px; color: var(--muted); font-size: 12px; }
+.login-card label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.login-card input { padding: 8px 10px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--text); }
+.login-card button { margin-top: 6px; padding: 9px; background: var(--accent); border: none; border-radius: 8px; color: #04101f; font-weight: 600; cursor: pointer; }
+.login-error { color: var(--alert); font-size: 12px; margin: 0; }
+
 .hidden { display: none; }

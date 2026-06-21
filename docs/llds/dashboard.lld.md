@@ -163,4 +163,28 @@ When enabled later, the only real work is implementing `send_command` — a uAge
 
 ---
 
+## 9. Authentication (demo access gate)
+
+The dashboard surfaces (synthetic) medical data, so access is gated behind a login. **This is a
+demo gate, not real HIPAA compliance** — the project uses synthetic data only and production
+compliance is explicitly out of scope (README § Out of Scope). It demonstrates the access-control
+story without claiming to satisfy it.
+
+- **Mechanism:** signed **session cookie** via Starlette `SessionMiddleware` (secret from
+  `settings.dashboard_secret_key`). Credentials checked against `settings.dashboard_username` /
+  `settings.dashboard_password` (default `admin` / `password`; override in `.env`).
+- **Routes:** `GET /login` (public page), `POST /login` (validate → set session → 303 to `/`;
+  on failure → 303 to `/login?error=1`), `GET /logout` (clear session → 303 to `/login`).
+- **Protection:** `/` redirects unauthenticated users to `/login`; `/api/*` return **401** when
+  unauthenticated (via the `require_api` dependency). `/static/*` and `/login` stay public so the
+  login page can render.
+- **Known limitations (demo gate):** single hardcoded account, no hashing/lockout/expiry/CSRF,
+  plaintext default password. Fine for judging; replace with a real IdP for anything beyond.
+
+| Decision | Chosen | Alternative | Why |
+|---|---|---|---|
+| Auth model | Session cookie + hardcoded creds | OAuth/IdP, JWT | Smallest thing that gates access for a 24h demo; no external dependency |
+
+---
+
 *Specs: [dashboard-specs.md](../specs/dashboard-specs.md) (`DASH-*`). Plan: dashboard is a stretch track in [the implementation plan](../plans/2026-06-20-er-twin-core.plan.md); build phases in TEAM.md.*
