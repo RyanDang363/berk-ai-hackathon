@@ -618,7 +618,10 @@ orchestrator = Agent(
     mailbox=True,
     publish_agent_details=True,
     network="testnet",
-    handle="ERTwin",  # public @handle on Agentverse/ASI:One (max 20 chars); falls back if already taken
+    # Public @handle on Agentverse. NOTE: in uagents 0.25.2 this only reaches Agentverse via the
+    # Inspector /connect flow (register_in_agentverse), NOT on a plain restart — the canonical handle
+    # is currently set on the Agentverse profile UI. Kept here in sync for when /connect re-runs.
+    handle="er-herald",
     description=(
         "Autonomous digital twin of a hospital emergency room, built on Fetch.ai uAgents. "
         "Chat to drive it: \"A new patient arrived with chest pain\", "
