@@ -24,6 +24,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from er_twin.config import settings
 
+from . import pika_jobs
 from .datasource import current_events, derive_summary, live_snapshot
 
 _STATIC = Path(__file__).parent / "static"
@@ -235,7 +236,39 @@ def api_library(user: str = Depends(require_api)) -> JSONResponse:
             if not isinstance(record, dict):
                 continue  # valid JSON but not an incident object (e.g. a bare list) — skip, don't 500
             entries.append(_library_entry(record, path.stem))
-    return JSONResponse({"incidents": entries})
+    # pika_enabled lets the library page show the "Generate clip" action only when it would work.
+    return JSONResponse({"incidents": entries, "pika_enabled": settings.dashboard_allow_pika})
+
+
+# --- On-demand Pika generation (gated, dashboard-orchestrated) -----------------
+#
+# The dashboard (an ops surface, not er_twin/) lets an operator render a logged incident into a Pika
+# clip on demand. It spawns the verified offline path (capture_replay_frames -> run_pika_keyframes.ps1
+# -> Claude CLI -> Pika MCP), which back-writes video_url into out/replay/{incident}.json. Gated by
+# DASHBOARD_ALLOW_PIKA because it spends Pika credits and shells out. @spec REPLAY-PIKA-003
+
+
+@app.post("/api/replay/{incident_id}/generate")
+def api_replay_generate(incident_id: str, user: str = Depends(require_api)) -> JSONResponse:
+    """Start (or rejoin) an on-demand Pika render for an incident. 403 unless DASHBOARD_ALLOW_PIKA."""
+    if not settings.dashboard_allow_pika:
+        raise HTTPException(status_code=403, detail="Pika generation is disabled (set DASHBOARD_ALLOW_PIKA=true)")
+    if _replay_file(incident_id) is None:
+        raise HTTPException(status_code=404, detail="incident replay not found")
+    job = pika_jobs.start_job(incident_id, _REPLAY_DIR)
+    return JSONResponse(job.as_dict(), status_code=202)
+
+
+@app.get("/api/replay/{incident_id}/status")
+def api_replay_status(incident_id: str, user: str = Depends(require_api)) -> JSONResponse:
+    """Poll an incident's render job. Reports the existing clip (idle) when no job has run this session."""
+    if not settings.dashboard_allow_pika:
+        raise HTTPException(status_code=403, detail="Pika generation is disabled (set DASHBOARD_ALLOW_PIKA=true)")
+    job = pika_jobs.get_job(incident_id)
+    if job is None:
+        url = pika_jobs.read_video_url(_REPLAY_DIR, incident_id)
+        return JSONResponse({"incident_id": incident_id, "status": pika_jobs.IDLE, "video_url": url, "error": None})
+    return JSONResponse(job.as_dict())
 
 
 @app.post("/api/command")
