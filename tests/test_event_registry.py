@@ -59,7 +59,6 @@ def test_commit_full_intake_creates_patient_and_assigns_resources():
 
 def test_commit_intake_assignments_moves_staff():
     # @spec ASSIGN-FLOW-002 @spec ASSIGN-STATE-001 — uses pre-created patient (test helper path)
-    from er_twin.agents import admissions
     store = _clean_store()
     patient_id, _, _ = admissions.intake(store, "Casey Lee", "chest pain", synthesize_vitals("MRN-0001"), "MRN-0001")
     slot = patient.find_idle_slot(store)

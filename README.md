@@ -1,5 +1,4 @@
-# ER Room Digital Twin
-
+# ER Room Digital Twin - Built for Berkeley AI Hackathon 2026
 **Hackathon Technical Specification — Developer Reference**
 
 Fetch.ai uAgents + Bureau · ASI:One · in-memory/Redis state · Pika MCP replay (via Claude Code)

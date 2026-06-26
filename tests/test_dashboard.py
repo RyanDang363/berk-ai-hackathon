@@ -5,6 +5,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from er_twin.config import settings
 from dashboard import datasource
 from dashboard.datasource import build_fixture_store, derive_summary, snapshot
 from dashboard import pika_jobs
@@ -12,6 +13,14 @@ from dashboard import server
 from dashboard.server import app
 
 CREDS = {"username": "admin", "password": "password"}
+
+
+@pytest.fixture(autouse=True)
+def _fixture_dashboard_source(monkeypatch):
+    """Dashboard tests use the JSON fixture, not live Redis from .env."""
+    monkeypatch.setattr(settings, "dashboard_source", "fixture")
+    datasource._fixture_store = None
+    datasource._fixture_buffer = None
 
 
 @pytest.fixture
@@ -240,7 +249,7 @@ def test_derive_summary_tolerates_partial_records():
 
 def test_fixture_is_default_source():
     # Guards the read-only baseline assumption used by the tests above. @spec DASH-SYS-001
-    assert datasource.settings.dashboard_source == "fixture"
+    assert settings.dashboard_source == "fixture"
 
 
 # --- Incident replay endpoints (data-driven replay, LLD §9.1) -----------------

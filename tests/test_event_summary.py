@@ -2,7 +2,7 @@
 
 The status summary is **read-only and synchronous** (LLD §7 / decision R2-F): the Orchestrator reads
 the shared store directly and renders a deterministic, state-derived template — no async messaging, no
-state mutation. So the whole event is a single pure function (`orchestrator.build_status_summary`)
+state mutation. So the whole event is a single pure function (`status_summary.build_status_summary`)
 plus a thin synchronous chat branch; these tests drive the pure function against an `InMemoryStore`.
 
 `build_status_summary(store, active_o2_alert_beds)` takes the in-flight O2-alert beds as a parameter
@@ -12,9 +12,11 @@ unit-testable by injecting a list — no live oxygen flow needed. Each test trac
 
 import copy
 
-from er_twin import main
+from er_twin import main, status_summary
 from er_twin.agents import bed, doctor, equipment, nurse, orchestrator, patient
 from er_twin.storage import InMemoryStore
+
+build_status_summary = status_summary.build_status_summary
 
 
 def _baseline_store() -> InMemoryStore:
@@ -40,7 +42,7 @@ def test_summary_baseline_string():
     # @spec SUMM-FLOW-001
     # @spec SUMM-FLOW-002
     store = _baseline_store()
-    assert orchestrator.build_status_summary(store, []) == (
+    assert build_status_summary(store, []) == (
         "2 patients active, 1 bed occupied, 1 nurse free. No critical alerts."
     )
 
@@ -49,7 +51,7 @@ def test_summary_after_intake_string():
     # @spec SUMM-FLOW-002 — counts update + "Most urgent" line after admitting Jordan Lee.
     store = _baseline_store()
     orchestrator.run_intake(store, "Jordan Lee", "chest pain", {"spo2": 96, "heart_rate": 112})
-    assert orchestrator.build_status_summary(store, []) == (
+    assert build_status_summary(store, []) == (
         "3 patients active, 2 beds occupied, 0 nurse(s) free. Most urgent: Jordan Lee (ESI-2)."
     )
 
@@ -60,7 +62,7 @@ def test_summary_after_intake_string():
 def test_summary_empty_er():
     # @spec SUMM-ERR-001
     store = _clean_store()
-    assert orchestrator.build_status_summary(store, []) == (
+    assert build_status_summary(store, []) == (
         "Nothing currently happening in the ER — no active patients, "
         "no occupied beds, and no critical alerts."
     )
@@ -72,7 +74,7 @@ def test_summary_empty_er():
 def test_summary_active_o2_alert_line():
     # @spec SUMM-FLOW-002 — names the bed via the display map; replaces the "no alerts" all-clear.
     store = _baseline_store()
-    summary = orchestrator.build_status_summary(store, ["bed3"])
+    summary = build_status_summary(store, ["bed3"])
     assert "1 active O2 alert on bed-3." in summary
     assert "No critical alerts." not in summary
 
@@ -80,7 +82,7 @@ def test_summary_active_o2_alert_line():
 def test_summary_multiple_o2_alerts_pluralized():
     # @spec SUMM-FLOW-002 — pluralize + name every alerting bed.
     store = _baseline_store()
-    summary = orchestrator.build_status_summary(store, ["bed3", "bed4"])
+    summary = build_status_summary(store, ["bed3", "bed4"])
     assert "2 active O2 alerts on bed-3, bed-4." in summary
 
 
@@ -95,13 +97,13 @@ def test_summary_most_urgent_lowest_acuity_then_id():
     store.set("er:patient:p3", {"id": "p3", "name": "Cara", "acuity": 1, "status": "waiting"})
     store.update("er:bed:bed1", {"status": "occupied", "occupied_by": "p1"})
     # lowest acuity is 1 (p2 and p3 tie); id ascending -> p2 "Bob".
-    assert "Most urgent: Bob (ESI-1)." in orchestrator.build_status_summary(store, [])
+    assert "Most urgent: Bob (ESI-1)." in build_status_summary(store, [])
 
 
 def test_summary_no_urgent_line_when_all_low_acuity():
     # @spec SUMM-FLOW-002 — no active patient with acuity <= 2 -> no "Most urgent" line.
     store = _baseline_store()  # p1 ESI-4, p2 ESI-3
-    summary = orchestrator.build_status_summary(store, [])
+    summary = build_status_summary(store, [])
     assert "Most urgent" not in summary
 
 
@@ -112,5 +114,5 @@ def test_summary_does_not_mutate_state():
     # @spec SUMM-STATE-001
     store = _baseline_store()
     before = copy.deepcopy(store._data)
-    orchestrator.build_status_summary(store, ["bed3"])
+    build_status_summary(store, ["bed3"])
     assert store._data == before

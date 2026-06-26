@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import pathlib
 
+from er_twin import status_summary
 from er_twin.agents import admissions, orchestrator
 from er_twin.memory import MemoryInterface
 from er_twin.storage import InMemoryStore
@@ -171,15 +172,15 @@ def _summary_store() -> InMemoryStore:
 def test_compose_summary_folds_recalled_context():
     # @spec MEM-FLOW-002
     store = _summary_store()
-    out = orchestrator.compose_summary(store, [], ["earlier: Jordan Lee admitted ESI-2"])
+    out = status_summary.compose_summary(store, [], ["earlier: Jordan Lee admitted ESI-2"])
     assert "Recent context: earlier: Jordan Lee admitted ESI-2." in out
 
 
 def test_compose_summary_unchanged_when_no_recall():
     # @spec MEM-FLOW-002 — NoopMemory returns [] → template path is byte-identical (no regression).
     store = _summary_store()
-    base = orchestrator.build_status_summary(store, [])
-    assert orchestrator.compose_summary(store, [], []) == base
+    base = status_summary.build_status_summary(store, [])
+    assert status_summary.compose_summary(store, [], []) == base
 
 
 # ---------------------------------------------------------------------------

@@ -11,7 +11,12 @@ Tests use the CLEAN seed (entity `init_state`, no `seed_baseline`) plus a minima
 (p2 on bed3 with oxygen unit o2_1, nurse1 busy so nurse2 is the deterministic dispatch pick).
 """
 
-from er_twin.agents import bed, doctor, equipment, nurse, orchestrator, patient
+from er_twin.agents import bed, doctor, equipment, nurse, patient
+from er_twin.oxygen_coord import (
+    apply_oxygen_swap,
+    format_oxygen_confirmation,
+    should_start_o2_dispatch,
+)
 from er_twin.storage import InMemoryStore
 
 
@@ -96,7 +101,7 @@ def test_oxygen_swap_applies_all_mutations():
     # @spec OXY-FLOW-005
     store = _oxygen_store()
     equipment.simulate_oxygen_drop(store, "bed3")
-    occupant = orchestrator.apply_oxygen_swap(store, "o2_1", "o2_2", "bed3", "nurse2")
+    occupant = apply_oxygen_swap(store, "o2_1", "o2_2", "bed3", "nurse2")
     assert occupant == "p2"
 
     o2_2 = store.get("er:equipment:o2_2")
@@ -146,13 +151,13 @@ def test_full_oxygen_flow_end_to_end():
     assert nurse_id == "nurse2"
 
     # OXY-FLOW-005 — apply swap.
-    occupant = orchestrator.apply_oxygen_swap(store, eid, replacement, "bed3", nurse_id)
+    occupant = apply_oxygen_swap(store, eid, replacement, "bed3", nurse_id)
     assert occupant == "p2"
     assert store.get("er:patient:p2")["vitals"]["spo2"] == 96
     assert store.get("er:bed:bed3")["equipment"] == ["o2_2"]
 
     # OXY-FLOW-006 — chat confirmation names unit, nurse, and bed.
-    msg = orchestrator.format_oxygen_confirmation("bed3", replacement, nurse_id)
+    msg = format_oxygen_confirmation("bed3", replacement, nurse_id)
     assert "bed-3" in msg
     assert "o2-2" in msg
     assert "Nurse Chen" in msg
@@ -164,22 +169,22 @@ def test_full_oxygen_flow_end_to_end():
 def test_in_flight_dispatch_dedupe():
     # @spec OXY-IDEM-001
     in_flight: dict[str, str] = {}
-    assert orchestrator.should_start_o2_dispatch(in_flight, "o2_1") is True
+    assert should_start_o2_dispatch(in_flight, "o2_1") is True
     in_flight["o2_1"] = "oxygen-1"  # dispatch started (value is now the flow_id)
-    assert orchestrator.should_start_o2_dispatch(in_flight, "o2_1") is False  # duplicate ignored
-    assert orchestrator.should_start_o2_dispatch(in_flight, "o2_2") is True  # a different unit is fine
+    assert should_start_o2_dispatch(in_flight, "o2_1") is False  # duplicate ignored
+    assert should_start_o2_dispatch(in_flight, "o2_2") is True  # a different unit is fine
 
 
 def test_oxygen_swap_is_idempotent():
     # @spec OXY-FLOW-005 — a duplicate/late StaffDispatchResponse must not double-apply the swap.
     store = _oxygen_store()
     equipment.simulate_oxygen_drop(store, "bed3")
-    occ1 = orchestrator.apply_oxygen_swap(store, "o2_1", "o2_2", "bed3", "nurse2")
+    occ1 = apply_oxygen_swap(store, "o2_1", "o2_2", "bed3", "nurse2")
     snapshot = (
         store.get("er:equipment:o2_2"), store.get("er:equipment:o2_1"),
         store.get("er:bed:bed3"), store.get("er:nurse:nurse2"),
     )
-    occ2 = orchestrator.apply_oxygen_swap(store, "o2_1", "o2_2", "bed3", "nurse2")  # re-apply
+    occ2 = apply_oxygen_swap(store, "o2_1", "o2_2", "bed3", "nurse2")  # re-apply
     assert occ1 == occ2 == "p2"
     assert (
         store.get("er:equipment:o2_2"), store.get("er:equipment:o2_1"),
