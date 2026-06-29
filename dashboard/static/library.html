@@ -3,28 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ER Twin — Incident Library</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <title>HERALD — Incident Library</title>
+  <link rel="stylesheet" href="/static/style.css?v=dashboard-sleek1" />
 </head>
-<body>
-  <header>
-    <h1>HERALD — Incident Library</h1>
+<body class="dashboard-body">
+  <div class="dashboard-shell">
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-head">
+        <h1 class="brand-name">HERALD</h1>
+      </div>
+    </div>
     <div class="meta">
       <span id="lib-count" class="updated">—</span>
       <a class="logout" href="/">Live floor</a>
       <a class="logout" href="/logout">Sign out</a>
     </div>
   </header>
-
-  <main>
     <section class="panel wide">
-      <div class="panel-topline">
-        <h2>This session's incidents</h2>
-        <p class="panel-note">Each incident is a data-grounded replay reconstructed from logged ER state. Play the Pika clip, or open the in-browser replay.</p>
+      <div class="panel-topline panel-topline--tight">
+        <h2>Incident Library</h2>
       </div>
       <div id="library" class="library-grid"></div>
     </section>
-  </main>
+  </div>
 
   <script src="/static/library.js"></script>
 </body>

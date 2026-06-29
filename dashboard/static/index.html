@@ -4,68 +4,46 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Herald - Live Floor</title>
-  <link rel="stylesheet" href="/static/style.css?v=dashboard-exterior-logo1" />
+  <link rel="stylesheet" href="/static/style.css?v=dashboard-sleek1" />
 </head>
 <body class="dashboard-body">
   <div class="dashboard-shell">
     <header class="topbar">
       <div class="brand-block">
         <div class="brand-head">
-          <img class="brand-logo" src="/static/birdLogo.png?v=dashboard-exterior-logo1" alt="" aria-hidden="true" />
-          <div class="brand-title">
-            <p class="eyebrow">Herald</p>
-            <h1>Herald</h1>
-          </div>
+          <img class="brand-logo" src="/static/birdLogo.png?v=dashboard-sleek1" alt="" aria-hidden="true" />
+          <h1 class="brand-name">HERALD</h1>
         </div>
-        <p class="hero-subline">Hospital Emergency Room Agentic Live Digital Twin</p>
-        <p class="hero-copy">Live operational view across beds, staff, patient flow, and equipment risk.</p>
       </div>
       <div class="meta">
-        <span id="banner" class="banner hidden">data source unavailable - showing last known state</span>
+        <span id="banner" class="banner hidden">data source unavailable — showing last known state</span>
         <span class="meta-cluster">
           <span id="live-dot" class="live-dot" title="live"></span>
           <span class="meta-label">Live</span>
         </span>
-        <span id="updated" class="updated">-</span>
-        <a class="logout" href="/library">Incident Library</a>
+        <span id="updated" class="updated">—</span>
+        <a class="logout" href="/library">Incidents</a>
         <a class="logout" href="/logout">Sign out</a>
       </div>
     </header>
-
-    <section class="hero-band">
-      <div class="hero-stat">
-        <span class="hero-stat-label">Mode</span>
-        <strong>Clinical digital twin</strong>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-label">Focus</span>
-        <strong>Care-floor visibility and alert coordination</strong>
-      </div>
-    </section>
 
     <section id="kpis" class="kpis"></section>
 
     <main class="dashboard-grid">
       <section class="panel wide floor-panel">
-        <div class="panel-topline">
-          <div>
-            <p class="section-kicker">Facility</p>
-            <h2>Emergency Floor</h2>
-          </div>
-          <p class="panel-note">Interactive floor model for beds, staff, patient movement, and equipment risk.</p>
+        <div class="panel-topline panel-topline--tight">
+          <h2>Emergency Floor</h2>
         </div>
         <div id="floor-map" class="floor-map"></div>
       </section>
 
       <div class="dashboard-column">
         <section class="panel">
-          <p class="section-kicker">Capacity</p>
           <h2>Beds</h2>
           <div id="beds" class="bed-grid"></div>
         </section>
 
         <section class="panel">
-          <p class="section-kicker">Coverage</p>
           <h2>Staff</h2>
           <div id="staff" class="cards"></div>
         </section>
@@ -73,24 +51,19 @@
 
       <div class="dashboard-column">
         <section class="panel">
-          <p class="section-kicker">Queue</p>
           <h2>Patients</h2>
           <div id="patients" class="cards"></div>
         </section>
 
         <section class="panel">
-          <p class="section-kicker">Assets</p>
           <h2>Equipment</h2>
           <div id="equipment" class="cards"></div>
         </section>
       </div>
 
       <section class="panel wide events-panel">
-        <div class="panel-topline">
-          <div>
-            <p class="section-kicker">Operations</p>
-            <h2>Events</h2>
-          </div>
+        <div class="panel-topline panel-topline--tight">
+          <h2>Events</h2>
           <div class="event-tabs" role="tablist">
             <button id="tab-current" class="event-tab active" type="button" role="tab" aria-selected="true">Current Events</button>
             <button id="tab-log" class="event-tab" type="button" role="tab" aria-selected="false">Event Log</button>
@@ -125,7 +98,7 @@
   <div id="toasts" class="toasts"></div>
 
   <script src="/static/vendor/three.min.js"></script>
-  <script src="/static/floor.js?v=dashboard-exterior-logo1"></script>
-  <script src="/static/app.js?v=dashboard-exterior-logo1"></script>
+  <script src="/static/floor.js?v=dashboard-sleek1"></script>
+  <script src="/static/app.js?v=dashboard-sleek1"></script>
 </body>
 </html>
